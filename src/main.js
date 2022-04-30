@@ -8,6 +8,7 @@ import grass from './img/grass.svg'
 import dirt from './img/dirt.svg'
 import wood from './img/wood-2.svg'
 import bg from './img/bg.png'
+import seedBag from './img/seed-bag.png'
 
 let cols = 4
 let rows = 7
@@ -57,11 +58,20 @@ const cellsDisp = {
   y: 70
 }
 
+let shopShow = false
+let shopButton
+let $shop = {}
+
+let invShow = false
+let invButton
+let $inv = {}
+
 p.preload = () => {
   img.grass = loadImage(grass)
   img.buy = loadImage(wood)
   img.dirt = loadImage(dirt)
   img.bg = loadImage(bg)
+  img.seedBag = loadImage(seedBag)
 }
 
 p.setup = () => {
@@ -123,6 +133,7 @@ p.setup = () => {
 
   // Grow
   $grow.div = document.querySelector('.grow')
+  $grow.title = document.querySelector('.grow-title')
   $grow.timer = document.querySelector('.grow-time-left')
   $grow.progress = document.querySelector('.grow-progress')
   growInterval = setInterval(() => {
@@ -160,6 +171,48 @@ p.setup = () => {
     width: img.bg.width * 1.85,
     height: img.bg.height * 1.85
   }
+
+  $shop.div = document.querySelector('.shop-wrapper')
+  $shop.close = document.querySelector('#shop-close')
+  $shop.close.addEventListener('click', () => {
+    shopShow = false
+    $shop.div.style.opacity = 0
+    $shop.div.style.pointerEvents = 'none'
+  })
+  shopButton = document.querySelector('.shop-button')
+  shopButton.addEventListener('click', () => {
+    shopShow = true
+    $shop.div.style.opacity = 1
+    $shop.div.style.pointerEvents = 'all'
+
+    let itemList = document.querySelector('.shop-items')
+    itemList.innerHTML = ''
+    server.crops.forEach(crop => {
+      let item = document.createElement('div')
+      item.classList.add('shop-item')
+      item.innerHTML = `
+        <div class="shop-item-image"><div>${crop.img}</div></div>
+        <div class="shop-item-name">${crop.name}</div>
+        <div class="shop-item-cost">${crop.cost} <i class="fas fa-coins"></i></div>
+      `
+      itemList.appendChild(item)
+    })
+  })
+  console.log(shopButton.getBoundingClientRect())
+
+  $inv.div = document.querySelector('.inv-wrapper')
+  $inv.close = document.querySelector('#inv-close')
+  $inv.close.addEventListener('click', () => {
+    invShow = false
+    $inv.div.style.opacity = 0
+    $inv.div.style.pointerEvents = 'none'
+  })
+  invButton = document.querySelector('.inv-button')
+  invButton.addEventListener('click', () => {
+    invShow = true
+    $inv.div.style.opacity = 1
+    $inv.div.style.pointerEvents = 'all'
+  })
 }
 
 p.draw = () => {
@@ -187,6 +240,7 @@ p.draw = () => {
 
   translate(-cellsDisp.x, -cellsDisp.y)
 
+  if (mouseOver)
   getMouseCoords()
 
   if (selected.x >= 0 && selected.x < rows && selected.y >= 0 && selected.y < cols) {
@@ -196,7 +250,10 @@ p.draw = () => {
       $grow.div.style.opacity = 0
     }
     else {
+      let crop = field.cells[selected.y][selected.x].crop
       $grow.div.style.opacity = 1
+
+      $grow.title.innerHTML = `${server.crops[crop-1].img} ${server.crops[crop-1].name}`
 
       $grow.div.style.top = `${current.y - cellsDisp.y + (selected.x + selected.y - 2) * h}px`
       $grow.div.style.left = `${current.x - cellsDisp.x + (selected.x - selected.y) * w - $grow.div.clientWidth / 2}px`
@@ -236,7 +293,7 @@ p.draw = () => {
       if (field.cells[j][i].crop > 0) {
         push()
         let timeleft = Date.now() - cell.endTime
-        let size = timeleft < 0? Math.floor((Date.now() - cell.startTime)/(cell.endTime - cell.startTime) * 24) : 24
+        let size = timeleft < 0 ? Math.floor((Date.now() - cell.startTime) / (cell.endTime - cell.startTime) * 24) : 24
         textSize(24 + size)
         text('🌱', 0, h)
 
@@ -248,6 +305,7 @@ p.draw = () => {
       }
 
       if (i === selected.x && j === selected.y) {
+        push()
         fill('#FFFFFF66')
         noStroke()
         beginShape()
@@ -260,6 +318,7 @@ p.draw = () => {
         // vertex(0, -h)
         // vertex(-w, 0)
         endShape(CLOSE)
+        pop()
       }
       if (field.cells[j][i].buystate === 1) {
         image(img.buy, 0, h / 3, 80, 100)

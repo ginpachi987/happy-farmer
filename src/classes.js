@@ -58,6 +58,16 @@ export class Cell {
   }
 }
 
+class Crop {
+  constructor(id, name, cost, time, img) {
+    this.id = id
+    this.name = name
+    this.cost = cost
+    this.time = time
+    this.img = img
+  }
+}
+
 class UserData {
   constructor() {
     this.balance = 0
@@ -67,16 +77,15 @@ class UserData {
 
     let menu = document.querySelector('#top-menu')
 
-    this.$img = document.createElement('img')
-    this.$img.classList.add('avatar')
-    menu.appendChild(this.$img)
-    this.$name = document.createElement('div')
-    menu.appendChild(this.$name)
-    this.$balance = document.createElement('div')
-    menu.appendChild(this.$balance)
+    this.$img = document.querySelector('.avatar')
+    // menu.appendChild(this.$img)
+    this.$name = document.querySelector('.username')
+    // menu.appendChild(this.$name)
+    this.$balance = document.querySelector('.user-balance')
+    // menu.appendChild(this.$balance)
 
-    this.$exp = document.createElement('div')
-    menu.appendChild(this.$exp)
+    this.$exp = document.querySelector('.user-level')
+    // menu.appendChild(this.$exp)
 
     this.updateStats()
   }
@@ -102,6 +111,7 @@ export class Server {
     this.url = url
     this.field = field
     this.user = new UserData()
+    this.crops = []
   }
 
   requestStats(request = {}) {
@@ -123,6 +133,18 @@ export class Server {
         }
         if (res.field) {
           this.field.set(res.field)
+        }
+        // if (res.crops) {
+        if (true) {
+          const crops = [
+            new Crop(1, 'Перец', 5, 90, '🌶️'),
+            new Crop(2, 'Арбуз', 10, 120, '🍈'),
+            new Crop(3, 'Апельсин', 15, 150, '🍊'),
+            new Crop(4, 'Лимон', 20, 180, '🍋'),
+            new Crop(5, 'Яблоко', 30, 360, '🍎'),
+            // 🍓🍆
+          ]
+          this.crops = crops
         }
       })
   }
