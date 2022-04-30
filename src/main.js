@@ -7,9 +7,10 @@ import { Coords, Field, Server } from './classes'
 import grass from './img/grass.svg'
 import dirt from './img/dirt.svg'
 import wood from './img/wood-2.svg'
+import bg from './img/bg.png'
 
 let cols = 4
-let rows = 8
+let rows = 7
 
 let p = window
 
@@ -33,7 +34,7 @@ let selected = new Coords(-1, -1)
 
 let w, h
 
-let angle = 33
+let angle = 26
 
 let field
 let img = {}
@@ -48,13 +49,23 @@ let growInterval
 let $grow = {}
 let growShow = false
 
+let updateInterval
+
+let bgSize
+const cellsDisp = {
+  x: 190,
+  y: 70
+}
+
 p.preload = () => {
   img.grass = loadImage(grass)
   img.buy = loadImage(wood)
   img.dirt = loadImage(dirt)
+  img.bg = loadImage(bg)
 }
 
 p.setup = () => {
+  // console.log(img)
   screen = {
     width: p.windowWidth,
     height: p.windowHeight
@@ -71,7 +82,7 @@ p.setup = () => {
   game.addEventListener('mouseleave', () => {
     mouseOver = false
   })
-  current = new Coords(p.windowWidth / 2, p.windowHeight / 3)
+  current = new Coords(p.windowWidth / 2, p.windowHeight / 2)
 
   field = new Field(cols, rows)
   server = new Server('https://games.yoro.dev/farmer/api/', field)
@@ -80,9 +91,9 @@ p.setup = () => {
 
   // sizeSlider = createSlider(1, 100, 10, 1)
   // sizeSlider.position(10, 10)
-  // dispX = createSlider(25, 60, 33, 1)
+  // dispX = createSlider(0, 200, 0, 1)
   // dispX.position(10, 40)
-  // dispY = createSlider(0, cellSize * 2, cellSize, 1)
+  // dispY = createSlider(0, 200, 0, 1)
   // dispY.position(10, 70)
 
   angleMode(DEGREES)
@@ -115,12 +126,15 @@ p.setup = () => {
   $grow.timer = document.querySelector('.grow-time-left')
   $grow.progress = document.querySelector('.grow-progress')
   growInterval = setInterval(() => {
-    if (true) {
-      let x = 0
-      let y = 0
+    if (growShow) {
+      let cell = field.cells[selected.y][selected.x]
 
-      let cell = field.cells[x][y]
       let time = Math.floor((cell.endTime - Date.now()) / 1000)
+      if (time < 0) {
+        $grow.timer.innerHTML = 'Созрело 👍'
+        $grow.progress.style.width = '100%'
+        return
+      }
       // console.log(time)
       let seconds = time % 60
       seconds = seconds < 10 ? '0' + seconds : seconds
@@ -136,6 +150,16 @@ p.setup = () => {
       $grow.progress.style.width = `${percent}%`
     }
   }, 1000)
+
+  updateInterval = setInterval(() => {
+    // console.log('sync')
+    server.requestStats()
+  }, 1000 * 60)
+
+  bgSize = {
+    width: img.bg.width * 1.85,
+    height: img.bg.height * 1.85
+  }
 }
 
 p.draw = () => {
@@ -143,6 +167,13 @@ p.draw = () => {
   background('#7ba149')
   noFill()
   stroke(255)
+
+  // console.log(dispX.value(), dispY.value())
+
+  // angle = dispX.value()
+  // console.log(angle)
+  // h = cellSize * sin(angle)
+  // w = cellSize * cos(angle)
 
   // angle = dispX.value()
 
@@ -152,19 +183,36 @@ p.draw = () => {
   }
   translate(current.x + disp.x, current.y + disp.y)
 
+  image(img.bg, 0, 0, bgSize.width, bgSize.height)
+
+  translate(-cellsDisp.x, -cellsDisp.y)
+
+  getMouseCoords()
+
   if (selected.x >= 0 && selected.x < rows && selected.y >= 0 && selected.y < cols) {
     document.querySelector('body').style.cursor = 'pointer'
     growShow = true
+    if (field.cells[selected.y][selected.x].crop == 0) {
+      $grow.div.style.opacity = 0
+    }
+    else {
+      $grow.div.style.opacity = 1
+
+      $grow.div.style.top = `${current.y - cellsDisp.y + (selected.x + selected.y - 2) * h}px`
+      $grow.div.style.left = `${current.x - cellsDisp.x + (selected.x - selected.y) * w - $grow.div.clientWidth / 2}px`
+    }
   }
   else {
     document.querySelector('body').style.cursor = 'default'
     growShow = false
+    $grow.div.style.opacity = 0
   }
 
   for (let j = 0; j < cols; j++) {
     push()
     for (let i = 0; i < rows; i++) {
       let sprite
+      let cell = field.cells[j][i]
 
       switch (field.cells[j][i].buystate) {
         case 0:
@@ -185,6 +233,20 @@ p.draw = () => {
       // vertex(-w, h)
       // endShape(CLOSE)
 
+      if (field.cells[j][i].crop > 0) {
+        push()
+        let timeleft = Date.now() - cell.endTime
+        let size = timeleft < 0? Math.floor((Date.now() - cell.startTime)/(cell.endTime - cell.startTime) * 24) : 24
+        textSize(24 + size)
+        text('🌱', 0, h)
+
+        if (field.cells[j][i].endTime - Date.now() <= 0) {
+          textSize(30)
+          text('🌶️', -w / 4, h * 2 / 3)
+        }
+        pop()
+      }
+
       if (i === selected.x && j === selected.y) {
         fill('#FFFFFF66')
         noStroke()
@@ -202,6 +264,9 @@ p.draw = () => {
       if (field.cells[j][i].buystate === 1) {
         image(img.buy, 0, h / 3, 80, 100)
       }
+
+
+
       noFill()
       // text(`${i}, ${j}`, 0, h)
       translate(w, h)
@@ -209,8 +274,6 @@ p.draw = () => {
     pop()
     translate(-w, h)
   }
-
-  getMouseCoords()
 }
 
 p.mousePressed = () => {
@@ -243,6 +306,18 @@ p.mouseClicked = () => {
     // }
 
     // field.cells[y][x].buyable = true
+  }
+
+  if (field.cells[selected.y][selected.x].buystate == 2) {
+    switch (field.cells[selected.y][selected.x].crop) {
+      case 0:
+        server.plant(field.cells[selected.y][selected.x].id)
+        break;
+
+      default:
+        server.harvest(field.cells[selected.y][selected.x])
+        break;
+    }
   }
 }
 
@@ -281,8 +356,8 @@ function getMouseCoords() {
   // LocalX = ((GlobalY - IsoY) / IsoH + (GlobalX - IsoX) / IsoW) / 2;
   // LocalY = ((GlobalY - IsoY) / IsoH - (GlobalX - IsoX) / IsoW) / 2;
 
-  let x = Math.floor(((mouseY - current.y - disp.y) / h + (mouseX - current.x - disp.x) / w) / 2)
-  let y = Math.floor(((mouseY - current.y - disp.y) / h - (mouseX - current.x - disp.x) / w) / 2)
+  let x = Math.floor(((mouseY - current.y - disp.y + cellsDisp.y) / h + (mouseX - current.x - disp.x + cellsDisp.x) / w) / 2)
+  let y = Math.floor(((mouseY - current.y - disp.y + cellsDisp.y) / h - (mouseX - current.x - disp.x + cellsDisp.x) / w) / 2)
 
   selected = { x: x, y: y }
 
@@ -300,9 +375,9 @@ function displayBuy(state = !showBuy) {
 
   if (!(selected.x < 0 || selected.x >= rows || selected.y < 0 || selected.y >= cols) && showBuy) {
     let text = $buy.div.children[0].children[0]
-    $buy.div.style.top = `${current.y + (selected.x + selected.y) * h - 150}px`
+    $buy.div.style.top = `${current.y - cellsDisp.y + (selected.x + selected.y) * h - 150}px`
 
-    $buy.div.style.left = `${current.x + (selected.x - selected.y) * w - $buy.div.clientWidth / 2}px`
+    $buy.div.style.left = `${current.x - cellsDisp.x + (selected.x - selected.y) * w - $buy.div.clientWidth / 2}px`
 
     let cost = field.cells[selected.y][selected.x].cost
     text.innerHTML = `Купить участок за ${cost} <i class="fas fa-coins"></i>?`

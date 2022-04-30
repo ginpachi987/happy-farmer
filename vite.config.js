@@ -4,6 +4,9 @@ const config = {
   build: {
     outDir: '../dist',
     emptyOutDir: true,
+  },
+  server: {
+    host: true
   }
 }
 

@@ -190,6 +190,9 @@ input {
   gap: 4px;
 
   box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.5s ease-in;
 }
 
 .grow-timer {

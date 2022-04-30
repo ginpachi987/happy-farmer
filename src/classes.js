@@ -38,8 +38,8 @@ export class Cell {
     this.id = 0
     this.x = 0
     this.y = 0
-    this.startTime
-    this.endTime
+    this.startTime = 0
+    this.endTime = 0
     // this.state = 0
     this.cost = 2
     this.buystate = 0
@@ -105,6 +105,7 @@ export class Server {
   }
 
   requestStats(request = {}) {
+    // console.log('fetch')
     fetch(this.url, {
       method: 'POST',
       // mode: 'no-cors',
@@ -131,5 +132,21 @@ export class Server {
       event: 'buy',
       id: id
     })
+  }
+
+  plant(id) {
+    this.requestStats({
+      event: 'plant',
+      id: id
+    })
+  }
+
+  harvest(cell) {
+    if (Date.now() - cell.endTime > 0) {
+      this.requestStats({
+        event: 'harvest',
+        id: cell.id
+      })
+    }
   }
 }
