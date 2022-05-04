@@ -27,7 +27,50 @@ main {
 }
 
 input {
-  position: absolute;
+  border-radius: 12px;
+  padding: 4px 16px;
+  border: none;
+  background-color: white;
+  box-shadow: #737377 0px 1px 1px;
+}
+
+button {
+  position: relative;
+  margin: 8px;
+  padding: 4px 16px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(#fbfbfb, #d8d8d8);
+  box-shadow: #737377 0px 4px 4px;
+  color: #105300;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+
+  &:hover {
+    background: linear-gradient(#d8d8d8, #fbfbfb);
+  }
+
+  &:disabled {
+    color: gray;
+    cursor: default;
+    background: linear-gradient(#fbfbfb, #d8d8d8);
+  }
+
+  // &:disabled:hover:after {
+  //   content: attr(data-disabled);
+  //   position: absolute;
+  //   bottom: 0px;
+  //   left: -140px;
+  //   width: 125px;
+  //   text-align: center;
+  //   color: #f00;
+  //   font-size: 12px;
+  //   font-weight: bold;
+
+  //   background-color: white;
+  //   border-radius: 10px;
+  // }
 }
 
 .menu-wrapper {
@@ -136,45 +179,6 @@ input {
   text-align: center;
   background-color: #a7ae9c;
   border-radius: 0 0 10px 10px;
-
-  button {
-    position: relative;
-    margin: 8px;
-    padding: 4px 16px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(#fbfbfb, #d8d8d8);
-    box-shadow: #737377 0px 4px 4px;
-    color: #105300;
-    font-weight: bold;
-    text-transform: uppercase;
-    cursor: pointer;
-
-    &:hover {
-      background: linear-gradient(#d8d8d8, #fbfbfb);
-    }
-
-    &:disabled {
-      color: gray;
-      cursor: default;
-      background: linear-gradient(#fbfbfb, #d8d8d8);
-    }
-
-    // &:disabled:hover:after {
-    //   content: attr(data-disabled);
-    //   position: absolute;
-    //   bottom: 0px;
-    //   left: -140px;
-    //   width: 125px;
-    //   text-align: center;
-    //   color: #f00;
-    //   font-size: 12px;
-    //   font-weight: bold;
-
-    //   background-color: white;
-    //   border-radius: 10px;
-    // }
-  }
 }
 
 .fa-coins, .fa-star {
@@ -267,7 +271,7 @@ input {
   transition: all 0.5s ease-in;
 }
 
-.shop, .inv {
+.shop, .inv, .login {
   width: 500px;
   height: 500px;
   max-width: 100%;
@@ -299,7 +303,7 @@ input {
   // }
 }
 
-.shop-title {
+.shop-title, .login-title {
   width: 100%;
   text-align: center;
   font-size: 1.2em;
@@ -357,4 +361,52 @@ input {
   bottom: 0;
   right: 0;
   font-size: 16px;
+}
+
+.collectable {
+  position: fixed;
+  pointer-events: none;
+  transition: all 0.5s ease-in-out;
+  // background-color: black;
+  width: 32px;
+  height: 32px;
+  font-size: 24px;
+}
+
+.login-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  background-color: #292929AA;
+  opacity: 0;
+
+  transition: all 0.5s ease-in;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 250px;
+  height: unset;
+}
+
+.registration {
+  font-size: 14px;
+  color: black;
+}
+
+.login-error {
+  color: red;
+  font-size: 14px;
+  text-align: center;
 }

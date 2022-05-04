@@ -71,9 +71,11 @@ class Crop {
 class UserData {
   constructor() {
     this.balance = 0
+    this.displayBalance = 0
     this.name = 'Player'
     this.avatar = ava
     this.exp = 0
+    this.displayExp = 0
 
     let menu = document.querySelector('#top-menu')
 
@@ -90,17 +92,61 @@ class UserData {
     this.updateStats()
   }
 
-  updateStats() {
+  updateStats(sync = false) {
     this.$img.src = this.avatar
     this.$name.innerText = this.name
-    this.$balance.innerHTML = `${this.balance} <i class="fas fa-coins"></i>`
-    this.$exp.innerHTML = `${this.exp} <i class="fas fa-star"></i>`
+    if (sync) this.displayBalance = this.balance
+    this.$balance.innerHTML = `${this.displayBalance} <i class="fas fa-coins"></i>`
+    this.$exp.innerHTML = `${this.displayExp} <i class="fas fa-star"></i>`
   }
 
   setData(user) {
-    this.balance = user.balance
-    this.name = user.name
+    this.balance = parseInt(user.balance)
+    this.name = user.username
     this.avatar = user.avatar || ava
+    this.exp = parseInt(user.exp)
+
+    this.updateStats()
+  }
+
+  correctBalance() {
+    let oldBalance = this.displayBalance.toString().split('').map(el => parseInt(el)).reverse()
+    let newBalance = this.balance.toString().split('').map(el => parseInt(el)).reverse()
+
+    if (newBalance.length > oldBalance.length) {
+      oldBalance.push(...[...Array(newBalance.length - oldBalance.length)].map(() => 0))
+    }
+    if (newBalance.length < oldBalance.length) {
+      newBalance.push(...[...Array(oldBalance.length - newBalance.length)].map(() => 0))
+    }
+
+    for (let i = 0; i < newBalance.length; i++) {
+      if (newBalance[i] == oldBalance[i]) {
+        continue
+      }
+      if (newBalance[i] > oldBalance[i]) {
+        oldBalance[i]++
+      }
+      else {
+        oldBalance[i]--
+      }
+      break
+    }
+
+    // oldBalance.forEach((digit, i) => {
+    //   // console.log(digit, newBalance[i])
+    //   if (digit > newBalance[i]) {
+    //     digit--
+    //   }
+    //   if (digit < newBalance[i]) {
+    //     digit++
+    //   }
+    //   // console.log(digit, newBalance[i])
+    // })
+
+    // console.log(oldBalance.reverse().join(''))
+    this.displayBalance = parseInt(oldBalance.reverse().join(''))
+    // console.log(this.displayBalance)
 
     this.updateStats()
   }
@@ -111,7 +157,14 @@ export class Server {
     this.url = url
     this.field = field
     this.user = new UserData()
-    this.crops = []
+    this.crops = [
+      new Crop(1, 'Перец', 5, 90, '🌶️'),
+      new Crop(2, 'Арбуз', 10, 120, '🍈'),
+      new Crop(3, 'Апельсин', 15, 150, '🍊'),
+      new Crop(4, 'Лимон', 20, 180, '🍋'),
+      new Crop(5, 'Яблоко', 30, 360, '🍎'),
+      // 🍓🍆
+    ]
   }
 
   requestStats(request = {}) {
@@ -170,5 +223,27 @@ export class Server {
         id: cell.id
       })
     }
+  }
+}
+
+export class Collectable {
+  constructor(container, type, img, left, top) {
+    this.container = container
+    this.el = document.createElement('div')
+    this.el.classList.add('collectable')
+    this.container.appendChild(this.el)
+    this.type = type
+    this.img = img
+    this.setPos(left, top)
+    this.el.innerHTML = this.img
+  }
+
+  setPos(x, y) {
+    this.el.style.left = `${x}px`
+    this.el.style.top = `${y}px`
+  }
+
+  destroy() {
+    this.container.removeChild(this.el)
   }
 }

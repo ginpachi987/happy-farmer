@@ -1,17 +1,16 @@
 /// <reference types='../node_modules/@types/p5/global' />
 
 import './style.scss'
-import * as p5 from '../node_modules/p5/lib/p5'
-import { Coords, Field, Server } from './classes'
-
-import grass from './img/grass.svg'
-import dirt from './img/dirt.svg'
-import wood from './img/wood-2.svg'
-import bg from './img/bg.png'
-import seedBag from './img/seed-bag.png'
+import { p5 } from 'p5'
+import { io } from 'socket.io-client'
+import { Collectable, Coords, Field, Server } from './classes'
+import { grass, dirt, wood, bg, seedBag } from './images'
 
 let cols = 4
 let rows = 7
+
+const serverName = 'https://yoro-farmer.herokuapp.com'
+// const serverName = 'http://localhost:3030'
 
 let p = window
 
@@ -23,12 +22,10 @@ let screen
 
 let cellSize = 100
 
-let balance = 4
-
 // let sizeSlider
 // let dispX, dispY
 
-let mouseOver = true
+let mouseOver = false
 let pressed = false
 
 let selected = new Coords(-1, -1)
@@ -66,6 +63,139 @@ let invShow = false
 let invButton
 let $inv = {}
 
+let collectables
+
+let socket
+
+let accessToken //= localStorage.getItem('accessToken')
+let refreshToken = localStorage.getItem('refreshToken')
+
+let $login = document.querySelector('.login')
+$login.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  let username = document.querySelector('#username').value
+  let password = document.querySelector('#password').value
+  let registration = document.querySelector('#registration').checked
+  // console.log(username, password, registration)
+  // console.log(JSON.stringify(body))
+
+  fetch(`${serverName}/${registration ? 'register' : 'login'}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      username: username,
+      password: password
+    })
+  })
+    .then(res => res.json())
+    .then(res => {
+      // console.log(res)
+      if (res.success) {
+        accessToken = res.accessToken
+        refreshToken = res.refreshToken
+
+        // localStorage.setItem('accessToken', accessToken)
+        localStorage.setItem('refreshToken', refreshToken)
+
+        let loginWrapper = document.querySelector('.login-wrapper')
+        loginWrapper.style.opacity = 0
+        loginWrapper.style.pointerEvents = 'none'
+
+        let top = document.querySelector('.top')
+        top.style.opacity = 1
+
+        openSocket()
+      }
+      else {
+        localStorage.removeItem('refreshToken')
+        // location.reload()
+        document.querySelector('.login-error').innerHTML = res.resp
+      }
+    })
+  // server.login($username.value, $password.value)
+})
+
+if (!refreshToken) {
+  let loginWrapper = document.querySelector('.login-wrapper')
+  loginWrapper.style.opacity = 1
+  loginWrapper.style.pointerEvents = 'all'
+
+  let top = document.querySelector('.top')
+  top.style.opacity = 0
+}
+else {
+  fetch(`${serverName}/generateToken`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ refreshToken: refreshToken })
+  })
+    .then(res => res.json())
+    .then(res => {
+      // console.log(res)
+      if (res.success) {
+        accessToken = res.accessToken
+        mouseOver = true
+        openSocket()
+      }
+      else {
+        localStorage.removeItem('refreshToken')
+        location.reload()
+      }
+    })
+}
+
+let $logout = document.querySelector('.logout-button')
+$logout.addEventListener('click', () => {
+  fetch(`${serverName}/logout`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ refreshToken: refreshToken })
+  })
+    .then(res => {
+      location.reload()
+      socket.disconnect()
+      localStorage.removeItem('refreshToken')
+    })
+})
+
+function openSocket() {
+  socket = io(serverName, {
+    extraHeaders: {
+      Authorization: `Bearer ${accessToken}`
+    }
+  })
+  socket.on('message', (data) => {
+    console.log(data)
+  })
+
+  socket.on('userData', (data) => {
+    // console.log(data)
+    server.user.setData(data)
+  })
+
+  socket.on('fields', (data) => {
+    server.field.set(data)
+    // console.log(data)
+  })
+
+  socket.on('balance', (balance) => {
+    server.user.balance = balance
+  })
+
+  socket.on('cell', (cell) => {
+
+  })
+}
+
 p.preload = () => {
   img.grass = loadImage(grass)
   img.buy = loadImage(wood)
@@ -88,16 +218,18 @@ p.setup = () => {
   let game = document.querySelector('#game')
   game.addEventListener('mouseenter', () => {
     mouseOver = true
+    // console.log('mouse enter')
   })
   game.addEventListener('mouseleave', () => {
     mouseOver = false
+    // console.log('mouse leave')
   })
   current = new Coords(p.windowWidth / 2, p.windowHeight / 2)
 
   field = new Field(cols, rows)
   server = new Server('https://games.yoro.dev/farmer/api/', field)
 
-  server.requestStats()
+  // server.requestStats()
 
   // sizeSlider = createSlider(1, 100, 10, 1)
   // sizeSlider.position(10, 10)
@@ -119,7 +251,8 @@ p.setup = () => {
   $buy.div = document.querySelector('.buy')
   $buy.yes = document.querySelector('#buy-yes')
   $buy.yes.addEventListener('click', () => {
-    server.buy(cellForBuy.id)
+    // server.buy(cellForBuy.id)
+    socket.emit('buy', cellForBuy.id)
     // cellForBuy.state = 1
     // cellForBuy.buyable = false
     // server.user.balance -= cellForBuy.cost
@@ -162,10 +295,10 @@ p.setup = () => {
     }
   }, 1000)
 
-  updateInterval = setInterval(() => {
-    // console.log('sync')
-    server.requestStats()
-  }, 1000 * 60)
+  // updateInterval = setInterval(() => {
+  //   // console.log('sync')
+  //   server.requestStats()
+  // }, 1000 * 60)
 
   bgSize = {
     width: img.bg.width * 1.85,
@@ -198,7 +331,7 @@ p.setup = () => {
       itemList.appendChild(item)
     })
   })
-  console.log(shopButton.getBoundingClientRect())
+  // console.log(shopButton.getBoundingClientRect())
 
   $inv.div = document.querySelector('.inv-wrapper')
   $inv.close = document.querySelector('#inv-close')
@@ -213,9 +346,26 @@ p.setup = () => {
     $inv.div.style.opacity = 1
     $inv.div.style.pointerEvents = 'all'
   })
+
+  collectables = document.querySelector('.collectables')
+
+  background('#7ba149')
 }
 
 p.draw = () => {
+  if (!accessToken) {
+    const fruits = ['🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', '🍐', '🍑', '🍒', '🍓', '🫐', '🥝', '🍅', '🫒', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅', '🍄', '🥜', '🌰']
+
+    push()
+    textSize(random() * 60 + 14)
+    textAlign(CENTER, CENTER)
+    text(fruits[floor(random() * fruits.length)], random() * p.windowWidth, random() * p.windowHeight)
+    translate(p.windowWidth / 2, p.windowHeight / 2)
+    pop()
+
+    return
+  }
+
   // console.log(dispX.value()/cellSize, dispY.value()/cellSize)
   background('#7ba149')
   noFill()
@@ -241,7 +391,7 @@ p.draw = () => {
   translate(-cellsDisp.x, -cellsDisp.y)
 
   if (mouseOver)
-  getMouseCoords()
+    getMouseCoords()
 
   if (selected.x >= 0 && selected.x < rows && selected.y >= 0 && selected.y < cols) {
     document.querySelector('body').style.cursor = 'pointer'
@@ -253,7 +403,7 @@ p.draw = () => {
       let crop = field.cells[selected.y][selected.x].crop
       $grow.div.style.opacity = 1
 
-      $grow.title.innerHTML = `${server.crops[crop-1].img} ${server.crops[crop-1].name}`
+      $grow.title.innerHTML = `${server.crops[crop - 1].img} ${server.crops[crop - 1].name}`
 
       $grow.div.style.top = `${current.y - cellsDisp.y + (selected.x + selected.y - 2) * h}px`
       $grow.div.style.left = `${current.x - cellsDisp.x + (selected.x - selected.y) * w - $grow.div.clientWidth / 2}px`
@@ -333,6 +483,30 @@ p.draw = () => {
     pop()
     translate(-w, h)
   }
+
+  // console.log(server.user.balance != server.user.displayBalance)
+  if (server.user.balance != server.user.displayBalance) {
+    server.user.correctBalance()
+  }
+
+  // if (server.user.balance > server.user.displayBalance) {
+  //   server.user.displayBalance++
+  //   server.user.updateStats()
+  // }
+  // else if (server.user.balance < server.user.displayBalance) {
+  //   server.user.displayBalance--
+  //   server.user.updateStats()
+  // }
+
+  // console.log(server.user.exp, server.user.displayExp)
+  if (server.user.exp > server.user.displayExp) {
+    server.user.displayExp++
+    server.user.updateStats()
+  }
+  else if (server.user.exp < server.user.displayExp) {
+    server.user.displayExp--
+    server.user.updateStats()
+  }
 }
 
 p.mousePressed = () => {
@@ -342,6 +516,8 @@ p.mousePressed = () => {
 }
 
 p.mouseClicked = () => {
+  // socket.emit('message', 'click')
+  // spawnCollectables()
   if (!mouseOver) return
   if (mouseX !== mouseStart.x || mouseY !== mouseStart.y || selected.x < 0 || selected.x >= rows || selected.y < 0 || selected.y >= cols) {
     displayBuy(false)
@@ -370,11 +546,13 @@ p.mouseClicked = () => {
   if (field.cells[selected.y][selected.x].buystate == 2) {
     switch (field.cells[selected.y][selected.x].crop) {
       case 0:
-        server.plant(field.cells[selected.y][selected.x].id)
+        socket.emit('plant', field.cells[selected.y][selected.x].id)
+        // server.plant(field.cells[selected.y][selected.x].id)
         break;
 
       default:
-        server.harvest(field.cells[selected.y][selected.x])
+        socket.emit('harvest', field.cells[selected.y][selected.x].id)
+        // server.harvest(field.cells[selected.y][selected.x])
         break;
     }
   }
@@ -448,4 +626,76 @@ function displayBuy(state = !showBuy) {
       $buy.yes.disabled = false
     }
   }
+}
+
+function spawnCollectables() {
+  // console.log(mouseX, mouseY)
+  let left = mouseX - 8
+  let top = mouseY - 8
+  let cols = [...Array(5)].map(() => new Collectable(collectables, 0, '🌶️', left, top))
+
+  cols.push(new Collectable(collectables, 1, '⭐', left, top))
+  cols.push(new Collectable(collectables, 1, '⭐', left, top))
+  cols.push(new Collectable(collectables, 1, '⭐', left, top))
+
+  // console.table(cols)
+
+  // cols.forEach(col => {
+  //   col.classList.add('collectable')
+  //   collectables.appendChild(col)
+  //   col.innerHTML = '🌶️'
+  //   col.style.left = `${left}px`
+  //   col.style.top = `${top}px`
+  // })
+  // console.log(cols)
+  // let col = document.createElement('div')
+  // col.classList.add('collectable')
+  // collectables.appendChild(col)
+
+  let inventory = invButton.getBoundingClientRect()
+  let exp = document.querySelector('.user-level').getBoundingClientRect()
+  // console.log(inventory)
+  let invLeft = inventory.left + inventory.width / 2 - 16
+  let invTop = inventory.top + inventory.height / 2 - 16
+
+  let expLeft = exp.left + exp.width / 2 - 16
+  let expTop = exp.top + exp.height / 2 - 16
+
+  setTimeout(() => {
+    cols.forEach(col => {
+      left = left + Math.floor(Math.random() * 64) - 32
+      top = top + Math.floor(Math.random() * 64) - 32
+      col.setPos(left, top)
+      // console.log(left, top)
+      // col.style.left = `${left}px`
+      // col.style.top = `${top}px`
+    })
+  }, 100)
+
+  setTimeout(() => {
+    cols.forEach(col => {
+      switch (col.type) {
+        case 0:
+          col.setPos(invLeft, invTop)
+          break;
+        case 1:
+          col.setPos(expLeft, expTop)
+          break;
+        default:
+          break;
+      }
+      // col.style.left = `${invLeft}px`
+      // col.style.top = `${invTop}px`
+    })
+  }, 1000)
+
+  setTimeout(() => {
+    cols.forEach(col => {
+      col.destroy()
+      server.user.exp += 1
+      server.user.balance += 1
+      // collectables.removeChild(col)
+    })
+
+  }, 1550);
 }

@@ -1,7 +1,7 @@
 {
   "name": "happy-farmer",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,6 +13,7 @@
     "vite": "^2.9.5"
   },
   "dependencies": {
-    "p5": "^1.4.1"
+    "p5": "^1.4.1",
+    "socket.io-client": "^4.5.0"
   }
 }
