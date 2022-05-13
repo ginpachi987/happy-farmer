@@ -9,8 +9,8 @@ import { grass, dirt, wood, bg, seedBag } from './images'
 let cols = 4
 let rows = 7
 
-const serverName = 'https://yoro-farmer.herokuapp.com'
-// const serverName = 'http://localhost:3030'
+// const serverName = 'https://yoro-farmer.herokuapp.com'
+const serverName = 'http://localhost:3030'
 
 let p = window
 
@@ -127,6 +127,69 @@ if (!refreshToken) {
   top.style.opacity = 0
 }
 else {
+  generateAccessToken()
+}
+
+let $wrapper = document.querySelector('.wrapper')
+let $logout = document.querySelector('.logout-button')
+$logout.addEventListener('click', () => {
+  let lo = document.createElement('div')
+  lo.classList.add('login')
+  let header = document.createElement('div')
+  header.classList.add('login-title')
+  header.innerHTML = '👤 Выход'
+  lo.appendChild(header)
+
+  let lbl = document.createElement('label')
+  let inp = document.createElement('input')
+  inp.type = 'checkbox'
+  inp.id = 'logout'
+  lbl.appendChild(inp)
+  lbl.innerHTML += 'Выйти на всех устройствах'
+
+  lo.appendChild(lbl)
+
+  let btns = document.createElement('div')
+  btns.classList.add('buy-button')
+
+  let button = document.createElement('button')
+  button.innerHTML = 'Выйти'
+  button.addEventListener('click', () => {
+    let input = document.querySelector('#logout')
+    console.log(input.checked)
+    fetch(`${serverName}/logout`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ refreshToken: refreshToken, clearSessions: input.checked })
+    })
+      .then(res => {
+        socket.disconnect()
+        location.reload()
+        localStorage.removeItem('refreshToken')
+      })
+  })
+  btns.appendChild(button)
+
+  let button2 = document.createElement('button')
+  button2.innerHTML = 'Отмена'
+  button2.addEventListener('click', () => {
+    $wrapper.removeChild(lo)
+    $wrapper.style.opacity = 0
+    $wrapper.style.pointerEvents = 'none'
+  })
+  btns.appendChild(button2)
+
+  lo.appendChild(btns)
+
+  $wrapper.appendChild(lo)
+  $wrapper.style.opacity = 1
+  $wrapper.style.pointerEvents = 'all'
+})
+
+function generateAccessToken() {
   fetch(`${serverName}/generateToken`, {
     method: 'POST',
     headers: {
@@ -150,24 +213,8 @@ else {
     })
 }
 
-let $logout = document.querySelector('.logout-button')
-$logout.addEventListener('click', () => {
-  fetch(`${serverName}/logout`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify({ refreshToken: refreshToken })
-  })
-    .then(res => {
-      location.reload()
-      socket.disconnect()
-      localStorage.removeItem('refreshToken')
-    })
-})
-
 function openSocket() {
+  socket = null
   socket = io(serverName, {
     extraHeaders: {
       Authorization: `Bearer ${accessToken}`
@@ -193,6 +240,13 @@ function openSocket() {
 
   socket.on('cell', (cell) => {
 
+  })
+
+  socket.on('disconnect', () => {
+    socket.close()
+    generateAccessToken()
+    location.reload()
+    // openSocket()
   })
 }
 
@@ -324,7 +378,7 @@ p.setup = () => {
       let item = document.createElement('div')
       item.classList.add('shop-item')
       item.innerHTML = `
-        <div class="shop-item-image"><div>${crop.img}</div></div>
+        <div class="shop-item-image shop-item-bg"><div>${crop.img}</div></div>
         <div class="shop-item-name">${crop.name}</div>
         <div class="shop-item-cost">${crop.cost} <i class="fas fa-coins"></i></div>
       `

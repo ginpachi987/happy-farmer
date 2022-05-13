@@ -119,10 +119,25 @@ button {
   box-shadow: 0px 0px 10px rgba(212, 251, 188, 0.75);
 }
 
-.shop-button, .inv-button {
+.shop-button, .inv-button, .logout-button {
   justify-self: flex-end;
-  font-size: 36px;
+  // font-size: 36px;
   cursor: pointer;
+  width: 36px;
+  height: 36px;
+  background-size: cover;
+}
+
+.shop-button {
+  background-image: url('/img/shop.png');
+}
+
+.inv-button {
+  background-image: url('/img/warehouse.png');
+}
+
+.logout-button {
+  background-image: url('/img/logout.png');
 }
 
 .buy {
@@ -254,7 +269,7 @@ button {
 
 
 // Shop
-.shop-wrapper, .inv-wrapper {
+.shop-wrapper, .inv-wrapper, .wrapper {
   position: fixed;
   top: 0;
   left: 0;
@@ -339,21 +354,24 @@ button {
 }
 
 .shop-item-image {
-  font-size: 16px;
+  font-size: 24px;
   width: 64px;
   height: 64px;
   position: relative;
-  background-image: url('/img/seed-bag.png');
-  background-size: cover;
 
   div {
     position: absolute;
-    top: 24px;
-    left: -4px;
+    top: 14px;
+    left: 0px;
     text-align: center;
     width: 100%;
     text-shadow: 0px 0px 2px #a7ae9c;
   }
+}
+
+.shop-item-bg {
+  background-image: url('/img/seed-bag.png');
+  background-size: cover;
 }
 
 .shop-item-count {

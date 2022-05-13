@@ -1,4 +1,4 @@
-import ava from './img/avatar.png'
+import { avatar } from './images'
 
 export class Coords {
   constructor(x = 0, y = 0) {
@@ -73,7 +73,7 @@ class UserData {
     this.balance = 0
     this.displayBalance = 0
     this.name = 'Player'
-    this.avatar = ava
+    this.avatar = avatar
     this.exp = 0
     this.displayExp = 0
 
@@ -103,7 +103,7 @@ class UserData {
   setData(user) {
     this.balance = parseInt(user.balance)
     this.name = user.username
-    this.avatar = user.avatar || ava
+    this.avatar = user.avatar || avatar
     this.exp = parseInt(user.exp)
 
     this.updateStats()
