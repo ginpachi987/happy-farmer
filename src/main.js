@@ -4,13 +4,14 @@ import './style.scss'
 import { p5 } from 'p5'
 import { io } from 'socket.io-client'
 import { Collectable, Coords, Field, Server } from './classes'
-import { grass, dirt, wood, bg, seedBag } from './images'
+import { grass, dirt, wood, bg, seedBag, news } from './images'
 
 let cols = 4
 let rows = 7
 
 // const serverName = 'https://yoro-farmer.herokuapp.com'
 const serverName = 'http://localhost:3030'
+// const serverName = 'http://192.168.1.139:3030/'
 
 let p = window
 
@@ -79,6 +80,11 @@ $login.addEventListener('submit', async (e) => {
   // console.log(username, password, registration)
   // console.log(JSON.stringify(body))
 
+  if (registration && (username.length < 3 || password.length < 8)) {
+    document.querySelector('.login-error').innerHTML = 'Логин и пароль не могут быть пустыми'
+    return
+  }
+
   fetch(`${serverName}/${registration ? 'register' : 'login'}`, {
     method: 'POST',
     headers: {
@@ -105,7 +111,10 @@ $login.addEventListener('submit', async (e) => {
         loginWrapper.style.pointerEvents = 'none'
 
         let top = document.querySelector('.top')
-        top.style.opacity = 1
+        top.style.top = '0'
+
+        let bottom = document.querySelector('.bottom')
+        bottom.style.bottom = '0'
 
         openSocket()
       }
@@ -123,8 +132,8 @@ if (!refreshToken) {
   loginWrapper.style.opacity = 1
   loginWrapper.style.pointerEvents = 'all'
 
-  let top = document.querySelector('.top')
-  top.style.opacity = 0
+  // let top = document.querySelector('.top')
+  // top.style.opacity = 0
 }
 else {
   generateAccessToken()
@@ -189,6 +198,57 @@ $logout.addEventListener('click', () => {
   $wrapper.style.pointerEvents = 'all'
 })
 
+let $news = document.querySelector('.news-button')
+$news.addEventListener('click', () => {
+  $wrapper.style.opacity = 1
+  $wrapper.style.pointerEvents = 'all'
+  mouseOver = false
+
+  let nw = document.createElement('div')
+  nw.classList.add('shop')
+  let header = document.createElement('div')
+  header.classList.add('shop-title')
+  header.innerHTML = '📰 Новости'
+  nw.appendChild(header)
+
+  let wrapper = document.createElement('div')
+  wrapper.classList.add('news-list')
+
+  let n = document.createElement('div')
+  n.classList.add('news-entry')
+  let h = document.createElement('h3')
+  h.innerHTML = 'Здесь начинается история'
+
+  let date = document.createElement('sub')
+  date.innerHTML = '16 мая 2022, 23:15'
+
+  let txt = document.createElement('div')
+  txt.innerHTML = 'Привет всем читающим. Добро пожаловать на открытый альфа-тест v0.0.0.0.0.0.0.1 нашей любимой игры Счастливый фермер. На данный момент можно только сажать перец (по нажатию) и собирать его (так же), ну, и открывать новые поля (да, я знаю про цену 9 поля, спасибо). Подозреваю, что со временем будет очень много изменений и сбросов, так что не очень привязывайтесь к тому, что уже открыли. Даже эту новость я пока что пишу "на коленках". 🌚<br/>Предложения принимаются в <a href="https://t.me/ginpachi987" target="_blank">телеграме</a>. Подписывайтесь на <a href="https://t.me/yorodev" target="_blank">канал</a>, если этого не сделал. Ну, или не подписывайтесь, что я вам сделаю. 🙈'
+
+  n.appendChild(h)
+
+  n.appendChild(document.createElement('hr'))
+  n.appendChild(txt)
+  n.append(date)
+  wrapper.appendChild(n)
+  nw.appendChild(wrapper)
+
+  let buttons = document.createElement('div')
+  buttons.classList.add('buy-button')
+
+  let ext = document.createElement('button')
+  ext.innerHTML = 'Закрыть'
+  ext.addEventListener('click', () => {
+    $wrapper.innerHTML = ''
+    $wrapper.style.opacity = 0
+    $wrapper.style.pointerEvents = 'none'
+  })
+
+  buttons.appendChild(ext)
+  nw.appendChild(buttons)
+  $wrapper.appendChild(nw)
+})
+
 function generateAccessToken() {
   fetch(`${serverName}/generateToken`, {
     method: 'POST',
@@ -205,6 +265,12 @@ function generateAccessToken() {
         accessToken = res.accessToken
         mouseOver = true
         openSocket()
+
+        let top = document.querySelector('.top')
+        top.style.top = '0'
+
+        // let bottom = document.querySelector('.bottom')
+        // bottom.style.bottom = '0'
       }
       else {
         localStorage.removeItem('refreshToken')
@@ -247,6 +313,19 @@ function openSocket() {
     generateAccessToken()
     location.reload()
     // openSocket()
+  })
+
+  socket.on('exp', (res) => {
+    // console.log(res)
+    if (res.nextLevel) {
+      server.user.nextLevelExp = res.nextLevelExp
+      server.user.exp += res.amount - res.nextLevelExp
+      server.user.level++
+    }
+    else {
+      server.user.exp += res.amount
+    }
+    server.user.updateStats()
   })
 }
 
@@ -372,18 +451,18 @@ p.setup = () => {
     $shop.div.style.opacity = 1
     $shop.div.style.pointerEvents = 'all'
 
-    let itemList = document.querySelector('.shop-items')
-    itemList.innerHTML = ''
-    server.crops.forEach(crop => {
-      let item = document.createElement('div')
-      item.classList.add('shop-item')
-      item.innerHTML = `
-        <div class="shop-item-image shop-item-bg"><div>${crop.img}</div></div>
-        <div class="shop-item-name">${crop.name}</div>
-        <div class="shop-item-cost">${crop.cost} <i class="fas fa-coins"></i></div>
-      `
-      itemList.appendChild(item)
-    })
+    // let itemList = document.querySelector('.shop-items')
+    // itemList.innerHTML = ''
+    // server.crops.forEach(crop => {
+    //   let item = document.createElement('div')
+    //   item.classList.add('shop-item')
+    //   item.innerHTML = `
+    //     <div class="shop-item-image shop-item-bg"><div>${crop.img}</div></div>
+    //     <div class="shop-item-name">${crop.name}</div>
+    //     <div class="shop-item-cost">${crop.cost} <i class="fas fa-coins"></i></div>
+    //   `
+    //   itemList.appendChild(item)
+    // })
   })
   // console.log(shopButton.getBoundingClientRect())
 
@@ -421,7 +500,8 @@ p.draw = () => {
   }
 
   // console.log(dispX.value()/cellSize, dispY.value()/cellSize)
-  background('#7ba149')
+  // background('#7ba149')
+  background('#89ba48')
   noFill()
   stroke(255)
 
@@ -629,6 +709,12 @@ p.mouseWheel = (event) => {
   //   cellSize -= 1
   // }
   // [h, w] = [cellSize * sin(angle), cellSize * cos(angle)]
+}
+
+p.touchStarted = () => {
+  if (!mouseOver) return
+  getMouseCoords()
+  console.log(selected)
 }
 
 p.windowResized = () => {

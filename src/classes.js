@@ -74,8 +74,10 @@ class UserData {
     this.displayBalance = 0
     this.name = 'Player'
     this.avatar = avatar
-    this.exp = 0
+    this.level = 1
+    this.exp = 10
     this.displayExp = 0
+    this.nextLevelExp = 50
 
     let menu = document.querySelector('#top-menu')
 
@@ -86,8 +88,9 @@ class UserData {
     this.$balance = document.querySelector('.user-balance')
     // menu.appendChild(this.$balance)
 
-    this.$exp = document.querySelector('.user-level')
+    this.$level = document.querySelector('.user-level')
     // menu.appendChild(this.$exp)
+    this.$exp = document.querySelector('.current-exp')
 
     this.updateStats()
   }
@@ -97,7 +100,8 @@ class UserData {
     this.$name.innerText = this.name
     if (sync) this.displayBalance = this.balance
     this.$balance.innerHTML = `${this.displayBalance} <i class="fas fa-coins"></i>`
-    this.$exp.innerHTML = `${this.displayExp} <i class="fas fa-star"></i>`
+    this.$level.innerHTML = `${this.level}`
+    this.$exp.style.width = `${floor(this.exp/this.nextLevelExp*146)}px`
   }
 
   setData(user) {
@@ -105,6 +109,8 @@ class UserData {
     this.name = user.username
     this.avatar = user.avatar || avatar
     this.exp = parseInt(user.exp)
+    this.level = parseInt(user.level) || 1
+    this.nextLevelExp = parseInt(user.nextLevelExp) || 50
 
     this.updateStats()
   }
