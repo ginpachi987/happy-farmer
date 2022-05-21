@@ -1,4 +1,4 @@
-import { avatar } from './images'
+import { avatar } from './scripts/images'
 
 export class Coords {
   constructor(x = 0, y = 0) {

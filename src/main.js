@@ -4,7 +4,7 @@ import './style.scss'
 import { p5 } from 'p5'
 import { io } from 'socket.io-client'
 import { Collectable, Coords, Field, Server } from './classes'
-import { grass, dirt, wood, bg, seedBag, news } from './images'
+import { grass, dirt, wood, bg, seedBag, news } from './scripts/images'
 
 let cols = 4
 let rows = 7

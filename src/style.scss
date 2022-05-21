@@ -1,29 +1,35 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
 
-body {
-  margin: 0;
-  padding: 0;
-  overflow-y: hidden;
-}
-
 * {
   font-family: 'Manrope', sans-serif;
   font-weight: 600;
-  // font-size: 16px;
 }
 
-#game {
-  display: flex;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 main {
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #89ba48;
+}
+
+#game {
+  width: 100%;
+  max-width: 1920px;
+  height: 100vh;
+  max-height: 1080px;
+  // background-color: #89ba48;
 }
 
 input {
@@ -88,23 +94,10 @@ button {
 
 .top {
   top: -70px;
-  // padding-top: 20px;
 }
 
 .bottom {
-  bottom: -70px;
-  // padding-bottom: 20px;
-}
-
-.user-stats {
-  width: 120px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.username {
-  text-align: left;
+  bottom: -75px;
 }
 
 .menu {
@@ -121,7 +114,6 @@ button {
   box-sizing: border-box;
   height: 70px;
   // border-radius: 10px;
-  
 }
 
 .menu-button {
@@ -137,7 +129,7 @@ button {
   background-image: url('/img/shop.png');
 }
 
-.inv-button {
+.warehouse-button {
   background-image: url('/img/warehouse.png');
 }
 
@@ -148,6 +140,35 @@ button {
 .news-button {
   background-image: url('/img/news.png');
 }
+
+.username {
+  text-align: left;
+}
+
+.cells-popups {}
+
+.cell-popup {
+  position: absolute;
+  top: 500px;
+  left: 500px;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity .3s ease-out;
+}
+
+// Unchecked
+
+
+
+
 
 .news-list {
   flex: 1;
@@ -298,7 +319,7 @@ button {
   background-color: #292929AA;
   opacity: 0;
 
-  transition: all 0.5s ease-in;
+  transition: opacity 0.5s ease-in;
 }
 
 .shop, .inv, .login {
