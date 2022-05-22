@@ -1,4 +1,4 @@
-export class Wrapper {
+class Wrapper {
   constructor() {
     this.el = document.querySelector('.wrapper')
   }
@@ -18,3 +18,5 @@ export class Wrapper {
     this.el.appendChild(el)
   }
 }
+
+export const wrapper = new Wrapper()

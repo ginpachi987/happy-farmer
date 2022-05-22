@@ -2,7 +2,7 @@ import '../style.scss'
 
 import { Game } from './game'
 import { preload } from './preload'
-import { Wrapper } from './wrapper'
+import { wrapper } from './wrapper'
 import { generateAccessToken, loginFormGenerator, logout } from './auth'
 import { io } from 'socket.io-client'
 import { Player } from './player'
@@ -16,7 +16,7 @@ let mouseStart = {
 }
 let touching = false
 
-let game = new Game()
+let game
 let player = new Player()
 let socket
 
@@ -82,12 +82,13 @@ let lastTime = 0
 setCanvasSize()
 
 // Wrapper
-const wrapper = new Wrapper()
+// const wrapper = new Wrapper()
 let refreshToken = localStorage.getItem('refreshToken') || ''
 
 // Loading
 let loading = { state: true }
 preload(wrapper).then(() => {
+  game = new Game()
   setCanvasSize()
   if (refreshToken) generateAccessToken(serverName, refreshToken, openSocket)
   else loginFormGenerator(serverName, wrapper, openSocket)
@@ -142,7 +143,7 @@ function setCanvasSize() {
   const height = Math.min(window.innerHeight, 1080)
   canvas.width = width
   canvas.height = height
-  game.resize(width, height)
+  if (game) game.resize(width, height)
 }
 
 function random() {

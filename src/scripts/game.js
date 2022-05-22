@@ -20,8 +20,13 @@ export class Game {
     this.height = Math.min(window.innerHeight, 1080)
     let popups = document.querySelector('.cells-popups')
     this.objects = [...Array(4 * 7)].map((el, i) => new Cell(i, popups))
-    this.bg = new Image()
-    this.bg.src = bg
+    let bgImage = new Image(1920, 1080)
+    bgImage.src = bg
+
+    this.bg = document.createElement('canvas')
+    this.bg.width = bgImage.width
+    this.bg.height = bgImage.height
+    this.bg.getContext('2d').drawImage(bgImage, 0, 0)
     this.disp = {
       x: 0,
       y: 0
@@ -34,6 +39,11 @@ export class Game {
       x: -1,
       y: -1
     }
+    this.interval = setInterval(() => {
+      this.objects.forEach(obj => {
+        obj.updateTimer()
+      })
+    }, 1000)
   }
 
   resize(width, height) {
